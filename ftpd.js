@@ -130,14 +130,6 @@ function createServer(host, sandbox) {
             }
         };
 
-        socket.addListener("connect", function () {
-            logIf(1, "Connection", socket);
-            //socket.send("220 NodeFTPd Server version 0.0.10\r\n");
-            //socket.write("220 written by Andrew Johnston (apjohnsto@gmail.com)\r\n");
-            //socket.write("220 Please visit http://github.com/billywhizz/NodeFTPd\r\n");
-            socket.write("220 FTP server (nodeftpd) ready\r\n");
-        });
-        
         socket.addListener("data", function (data) {
             data = (data+'').trim();
             logIf(2, "FTP command: " + data, socket);
@@ -352,18 +344,6 @@ function createServer(host, sandbox) {
                             // should watch out for malicious users uploading large amounts of data outside protocol
                             logIf(4, 'Data event: received ' + (Buffer.isBuffer(data) ? 'buffer' : 'string'), socket);
                         });
-                        psocket.on("connect", function() {
-                            logIf(1, "Passive data event: connect", socket);
-                            // Once we have a completed data connection, make note of it
-                            socket.dataSocket = psocket;
-
-                            // 150 should be sent before we send data on the data connection
-                            //socket.write("150 Connection Accepted\r\n");
-                            if (socket.readable) socket.resume();
-
-                            // Emit this so the pending callback gets picked up in whenDataWritable()
-                            socket.dataListener.emit("data-ready", psocket);
-                        });
                         psocket.on("end", function () {
                             logIf(3, "Passive data event: end", socket);
                             // remove pointer
@@ -383,6 +363,17 @@ function createServer(host, sandbox) {
                             );
                             if (socket.readable) socket.resume();
                         });
+
+                        // Once we have a completed data connection, make note of it
+                        socket.dataSocket = psocket;
+
+                        // 150 should be sent before we send data on the data connection
+                        //socket.write("150 Connection Accepted\r\n");
+                        if (socket.readable) socket.resume();
+
+                        // Emit this so the pending callback gets picked up in whenDataWritable()
+                        socket.dataListener.emit("data-ready", psocket);
+
                     });
                     // Once we're successfully listening, tell the client
                     pasv.addListener("listening", function() {
@@ -663,6 +654,13 @@ function createServer(host, sandbox) {
         socket.addListener("error", function (err) {
             logIf(0, "Client connection error: " + err, socket);
         });
+
+        // Tell client we're ready
+        logIf(1, "Connection", socket);
+        //socket.send("220 NodeFTPd Server version 0.0.10\r\n");
+        //socket.write("220 written by Andrew Johnston (apjohnsto@gmail.com)\r\n");
+        //socket.write("220 Please visit http://github.com/billywhizz/NodeFTPd\r\n");
+        socket.write("220 FTP server (nodeftpd) ready\r\n");
     });
 
     server.addListener("close", function() {
