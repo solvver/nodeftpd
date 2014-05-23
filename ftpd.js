@@ -18,7 +18,7 @@ TODO:
 
 
 // host should be an IP address, and sandbox a path without trailing slash for now
-function createServer(host, sandbox) {
+function createServer(host, sandbox, writer) {
     // make sure host is an IP address, otherwise DATA connections will likely break
     var server = net.createServer();
     server.baseSandbox = sandbox; // path which we're starting relative to
@@ -518,6 +518,14 @@ function createServer(host, sandbox) {
                         socket.write("150 Ok to send data\r\n"); // don't think resume() needs to wait for this to succeed
                         if (dataSocket.readable) {
                             dataSocket.resume();
+                            //MANU HACK
+                            if(server.writers.length >0){
+                                for(var i=0;i<server.writers.length;i++){
+                                    var writer=new server.writers[0](commandArg);
+                                    dataSocket.pipe(writer);
+                                }
+                            }
+                            //END MANU HACK
                             // Let pipe() do the dirty work ... it'll keep both streams in sync
                             dataSocket.pipe(destination);
                         }
@@ -666,8 +674,13 @@ function createServer(host, sandbox) {
     server.addListener("close", function() {
         logIf(0, "Server closed");
     });
-
+    //MANU HACK
+    //writers must be constructors that accept the filename being written
+    server.writers=[];
+    if(writer)
+    server.writers.push(writer);
     return server;
+    //END MANU HACK
 }
 util.inherits(createServer, process.EventEmitter);
 exports.createServer = createServer;
