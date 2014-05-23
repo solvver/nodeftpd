@@ -19,6 +19,7 @@ TODO:
 
 // host should be an IP address, and sandbox a path without trailing slash for now
 function createServer(host, sandbox, writer, logger) {
+    console.log("FTP (ftpd) logger available?", logger!=undefined);
     // make sure host is an IP address, otherwise DATA connections will likely break
     var server = net.createServer();
     server.baseSandbox = sandbox; // path which we're starting relative to
