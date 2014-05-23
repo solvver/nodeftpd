@@ -18,13 +18,17 @@ TODO:
 
 
 // host should be an IP address, and sandbox a path without trailing slash for now
-function createServer(host, sandbox, writer) {
+function createServer(host, sandbox, writer, logger) {
     // make sure host is an IP address, otherwise DATA connections will likely break
     var server = net.createServer();
     server.baseSandbox = sandbox; // path which we're starting relative to
     server.debugging = 0;
 
     var logIf = function(level, message, socket) {
+        if(logger){
+            if(level <=1) logger.info(message);
+            else logger.debug(message);
+        }
         if (server.debugging >= level) {
             if (socket)
                 console.log(socket.remoteAddress + ": " + message);
