@@ -502,7 +502,9 @@ function createServer(host, sandbox, writer, logger) {
                         // dataSocket comes to us paused, so we have a chance to create the file before accepting data
                         filename = PathModule.resolve(socket.fs.cwd(), commandArg);
                         var destination = fs.createWriteStream( PathModule.join(socket.sandbox, filename), {flags: 'w+', mode:0644});
+                        var error_on_file=false;
                         destination.on("error", function(err) {
+                            error_on_file=err;
                             logIf(0, 'Error opening/creating file: ' + filename, socket);
                             socket.write("553 Could not create file\r\n");
                             dataSocket.end();
@@ -515,9 +517,13 @@ function createServer(host, sandbox, writer, logger) {
 
                         dataSocket.addListener("end", function () {
                             socket.write("226 Data connection closed\r\n");
+                            if(!error_on_file)
+                                server.emit("file", PathModule.join(socket.sandbox, filename))
+                            else server.emit("file_error", error_on_file);
                         });
                         dataSocket.addListener("error", function(err) {
                             logIf(0, "Error transferring " + filename + ": " + err, socket);
+                            server.emit("file_error", err)
                         });
                         logIf(3, "Told client ok to send file data", socket);
                         socket.write("150 Ok to send data\r\n"); // don't think resume() needs to wait for this to succeed
