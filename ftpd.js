@@ -501,7 +501,7 @@ function createServer(host, sandbox, writer, logger) {
                     whenDataWritable( function(dataSocket) {
                         // dataSocket comes to us paused, so we have a chance to create the file before accepting data
                         filename = PathModule.resolve(socket.fs.cwd(), commandArg);
-                        var destination = fs.createWriteStream( PathModule.join(socket.sandbox, filename), {flags: 'w+', mode:0644});
+                        var destination = fs.createWriteStream( PathModule.join(socket.sandbox, filename), {flags: 'a+', mode:0644});
                         var error_on_file=false;
                         destination.on("error", function(err) {
                             error_on_file=err;
